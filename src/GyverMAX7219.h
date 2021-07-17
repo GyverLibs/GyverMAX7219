@@ -15,6 +15,7 @@
     Версии:
     v1.0 - релиз
     v1.1 - оптимизирован SPI
+    v1.2 - переделан FastIO
 */
 
 #ifndef GyverMAX7219_h
@@ -23,7 +24,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <GyverGFX.h>
-#include "FastIO.h"
+#include "FastIO_v2.h"
 
 #ifndef MAX_SPI_SPEED
 #define MAX_SPI_SPEED 1000000
@@ -121,10 +122,10 @@ public:
 private:
     void beginData() {
         SPI.beginTransaction(MAX_SPI_SETT);
-        fastWrite(CSpin, 0);		
+        F_fastWrite(CSpin, 0);		
     }
     void endData() {		
-        fastWrite(CSpin, 1);
+        F_fastWrite(CSpin, 1);
         SPI.endTransaction();
     }
     void sendCMD(uint8_t address, uint8_t value) {
