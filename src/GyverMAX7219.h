@@ -138,8 +138,8 @@ private:
             SPI.transfer(address);
             SPI.transfer(value);
         } else {
-            fastShiftOut(DATpin, CLKpin, MSBFIRST, address);
-            fastShiftOut(DATpin, CLKpin, MSBFIRST, value);
+            F_fastShiftOut(DATpin, CLKpin, MSBFIRST, address);
+            F_fastShiftOut(DATpin, CLKpin, MSBFIRST, value);
         }		
     }
 
