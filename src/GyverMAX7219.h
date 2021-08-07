@@ -16,6 +16,7 @@
     v1.0 - релиз
     v1.1 - оптимизирован SPI
     v1.2 - переделан FastIO
+    v1.2.1 - исправлен баг в SPI (с 1.2)
 */
 
 #ifndef GyverMAX7219_h
@@ -138,8 +139,8 @@ private:
             SPI.transfer(address);
             SPI.transfer(value);
         } else {
-            fastShiftOut(DATpin, CLKpin, MSBFIRST, address);
-            fastShiftOut(DATpin, CLKpin, MSBFIRST, value);
+            F_fastShiftOut(DATpin, CLKpin, MSBFIRST, address);
+            F_fastShiftOut(DATpin, CLKpin, MSBFIRST, value);
         }		
     }
 
