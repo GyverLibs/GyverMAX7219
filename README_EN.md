@@ -1,3 +1,5 @@
+This is an automatic translation, may be incorrect in some places. See sources and examples!
+
 # GyverMAX7219
 The sharpest library for MAX7219 matrices in the wild west
 - Inherits graphics from GyverGFX
