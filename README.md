@@ -1,4 +1,4 @@
-[![Foo](https://img.shields.io/badge/Version-1.3-brightgreen.svg?style=flat-square)](#versions)
+[![Foo](https://img.shields.io/badge/Version-1.4-brightgreen.svg?style=flat-square)](#versions)
 [![Foo](https://img.shields.io/badge/Website-AlexGyver.ru-blue.svg?style=flat-square)](https://alexgyver.ru/)
 [![Foo](https://img.shields.io/badge/%E2%82%BD$%E2%82%AC%20%D0%9D%D0%B0%20%D0%BF%D0%B8%D0%B2%D0%BE-%D1%81%20%D1%80%D1%8B%D0%B1%D0%BA%D0%BE%D0%B9-orange.svg?style=flat-square)](https://alexgyver.ru/support_alex/)
 [![Foo](https://img.shields.io/badge/README-ENGLISH-blueviolet.svg?style=flat-square)](https://github-com.translate.goog/GyverLibs/GyverMAX7219?_x_tr_sl=ru&_x_tr_tl=en)  
@@ -11,6 +11,7 @@ Cамая резкая библиотека для матриц MAX7219 на д�
 - Подключение матриц зигзагом
 - Аппаратный и программный SPI
 - Невероятная оптимизация
+- Работает с дисплеями любой конструкции
 
 ### Совместимость
 Совместима со всеми Arduino платформами (используются Arduino-функции)
@@ -53,13 +54,25 @@ MAX7219 < W, H, CS, DATA, CLK > mtrx; // подключение к любым п
 // CS, DATA, CLK - номера пинов
 ```
 
+## Дисплей
+![setType](/doc/setType.png)
+![setConnection](/doc/setConnection.png)
+
 <a id="usage"></a>
 ## Использование
 ```cpp
+// настройка
 void begin();                   // запустить
-void setRotation(uint8_t rot);  // поворот матриц (0, 1, 2, 3 на 90 град по часовой стрелке)
 void setBright(byte value);     // установить яркость [0-15]
 void setPower(bool value);      // переключить питание
+
+// ориентация
+void setRotation(uint8_t rot);      // поворот МАТРИЦ (8x8): 0, 1, 2, 3 на 90 град по часовой стрелке
+void setFlip(bool x, bool y);       // зеркальное отражение МАТРИЦ (8x8) по x и y
+void setType(bool type);            // конструкция дисплея (тип строчности)
+void setConnection(uint8_t conn);   // точка подключения дисплея
+
+// рисование
 void clear();                   // очистить
 void fill();                    // залить
 void fillByte(byte data);       // залить байтом
@@ -139,6 +152,7 @@ void loop() {
 - v1.2.1 - исправлен баг в SPI (с 1.2)
 - v1.2.2 - убран FastIO
 - v1.3 - мелкие доработки и оптимизация, добавил поворот матриц
+- v1.4 - добавил поддержку матричных дисплеев любой конфигурации (точка подключения, направление, чередование)
 
 <a id="feedback"></a>
 ## Баги и обратная связь

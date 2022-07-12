@@ -19,14 +19,28 @@
     v1.2.1 - исправлен баг в SPI (с 1.2)
     v1.2.2 - убран FastIO
     v1.3 - мелкие доработки и оптимизация, добавил поворот матриц
+    v1.4 - добавил поддержку матричных дисплеев любой конфигурации (точка подключения, направление, чередование)
 */
 
-#ifndef GyverMAX7219_h
-#define GyverMAX7219_h
+#ifndef _GyverMAX7219_h
+#define _GyverMAX7219_h
 
 #include <Arduino.h>
 #include <SPI.h>
-#include <GyverGFX.h>
+#include "GyverGFX.h"
+
+#define GM_ZIGZAG 0
+#define GM_SERIES 1
+
+#define GM_LEFT_TOP_RIGHT 0
+#define GM_RIGHT_TOP_LEFT 1
+#define GM_RIGHT_BOTTOM_LEFT 2
+#define GM_LEFT_BOTTOM_RIGHT 3
+
+#define GM_LEFT_TOP_DOWN 4
+#define GM_RIGHT_TOP_DOWN 5
+#define GM_RIGHT_BOTTOM_UP 6
+#define GM_LEFT_BOTTOM_UP 7
 
 #ifndef MAX_SPI_SPEED
 #define MAX_SPI_SPEED 1000000
@@ -134,41 +148,94 @@ public:
         }
     }
     
-    // поворот матриц (0, 1, 2, 3 на 90 град по часовой стрелке)
+    // поворот матриц (8x8): 0, 1, 2, 3 на 90 град по часовой стрелке
     void setRotation(uint8_t rot) {
         _rot = rot;
+    }
+
+    // зеркальное отражение матриц (8x8) по x и y
+    void setFlip(bool x, bool y) {
+        _flip = x | (y << 1);
+    }
+    
+    // тип дисплея: построчный последовательный (GM_SERIES) или зигзаг GM_ZIGZAG
+    void setType(bool type) {
+        _type = type;
+    }
+    
+    // ориентация (точка подключения дисплея)
+    void setConnection(uint8_t conn) {
+        _conn = conn;
+        if (_conn <= 3) size(_maxX, _maxY);
+        else size(_maxY, _maxX);
     }
 
     uint8_t buffer[width * height * 8];
 
 private:
     int getPosition(int x, int y) {
-        if (x >= 0 && x < width * 8 && y >= 0 && y < height * 8) {
-            int b = y;
-            switch (_rot) {
-            case 1:
-                y = (y & 0xF8) + (x & 7);
-                x = (x & 0xF8) + 7 - (b & 7);
-                break;
-            case 2:
-                x = (x & 0xF8) + 7 - (x & 7);   // (x / 8 + 1) * 8 - 1 - (x % 8)
-                y = (y & 0xF8) + 7 - (y & 7);   // (y / 8 + 1) * 8 - 1 - (y % 8)
-                break;
-            case 3:
-                y = (y & 0xF8) + 7 - (x & 7);
-                x = (x & 0xF8) + (b & 7);
-                break;
-            }
-            if ((y >> 3) & 1) {               	// если это нечётная матрица: (y / 8) % 2
-                x = width * 8 - 1 - x;          // отзеркалить x
+        switch (_conn) {
+        //case GM_LEFT_TOP_RIGHT: break;
+        case GM_RIGHT_TOP_LEFT: flipX(x); flip(y); break;
+        case GM_RIGHT_BOTTOM_LEFT: flipY(y); flipX(x); break;
+        case GM_LEFT_BOTTOM_RIGHT: flipY(y); flip(y); break;
+        case GM_LEFT_TOP_DOWN: swap(x, y); flip(y); break;
+        case GM_RIGHT_TOP_DOWN: swap(x, y); flipY(y); break;
+        case GM_RIGHT_BOTTOM_UP: swap(x, y); flipX(x); flip(y); flipY(y); break;
+        case GM_LEFT_BOTTOM_UP: swap(x, y); flipX(x); break;
+        }
+        if (x < 0 || x >= _maxX || y < 0 || y >= _maxY) return -1;
+
+        int b = y;
+        switch (_rot) {
+        //case 0: break;
+        case 1:
+            y = (y & 0xF8) + (x & 7);
+            x = (x & 0xF8) + 7 - (b & 7);
+            break;
+        case 2:
+            flip(x);
+            flip(y);
+            break;
+        case 3:
+            y = (y & 0xF8) + 7 - (x & 7);
+            x = (x & 0xF8) + (b & 7);
+            break;
+        }
+
+        switch (_flip) {
+        //case 0: break;
+        case 1: flip(x); break;
+        case 2: flip(y); break;
+        case 3: flip(x); flip(y); break;
+        }
+        
+        if (_type == GM_ZIGZAG) {
+            if ((y >> 3) & 1) {                 // если это нечётная матрица: (y / 8) % 2
+                x = _maxX - 1 - x;              // отзеркалить x
                 y = (y & 0xF8) + (7 - (y & 7)); // отзеркалить y: (y / 8) * 8 + (7 - (y % 8));
             }
-            _bx = x & 7;
-            return width * (height - 1 - (y >> 3)) + (width - 1 - (x >> 3)) + (y & 7) * width * height; // позиция в буфере
         }
-        return -1;
+        
+        _bx = x & 7;
+        return width * (height - 1 - (y >> 3)) + (width - 1 - (x >> 3)) + (y & 7) * width * height; // позиция в буфере
     }
-    
+
+    void flip(int& v) {
+        v = (v & 0xF8) + 7 - (v & 7);   // (v / 8 + 1) * 8 - 1 - (v % 8)
+    }
+    void flipX(int& v) {
+        v = _maxX - v - 1;
+    }
+    void flipY(int& v) {
+        v = _maxY - v - 1;
+    }
+    void swap(int& x, int& y) {
+        int b = y;
+        y = x;
+        x = b;
+    }
+
     void fastWrite(const uint8_t pin, bool val) {
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
         if (pin < 8) bitWrite(PORTD, pin, val);
@@ -212,7 +279,7 @@ private:
         } else {
             F_fastShiftOut(DATpin, CLKpin, MSBFIRST, address);
             F_fastShiftOut(DATpin, CLKpin, MSBFIRST, value);
-        }		
+        }
     }
     void sendCMD(uint8_t address, uint8_t value) {
         beginData();
@@ -221,7 +288,10 @@ private:
     }
     
     const int _amount = width * height;
+    const int _maxX = width * 8;
+    const int _maxY = height * 8;
     int _row = 0, _count = 0;
-    uint8_t _rot = 0, _bx = 0;
+    uint8_t _rot = 0, _bx = 0, _flip = 0, _conn = 0;
+    bool _type = GM_ZIGZAG;
 };
 #endif
