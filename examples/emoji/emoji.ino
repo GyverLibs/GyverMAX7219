@@ -3,7 +3,7 @@ MAX7219 < 1, 1, 5 > mtrx;   // одна матрица (1х1), пин CS на D5
 
 // https://github.com/jorydotcom/matrix-emoji/blob/master/current-j5-emoji.js
 
-// каждый массив - одby emoji
+// каждый массив - один emoji
 const uint8_t angryface_B[] PROGMEM = {0x00, 0x66, 0x66, 0x00, 0x18, 0x24, 0x42, 0x81};
 const uint8_t circle_B[] PROGMEM = {0x3c, 0x42, 0x81, 0x81, 0x81, 0x81, 0x42, 0x3c};
 const uint8_t cdot_B[] PROGMEM = {0x3c, 0x42, 0x81, 0x99, 0x99, 0x81, 0x42, 0x3c};

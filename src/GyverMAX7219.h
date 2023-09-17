@@ -7,7 +7,7 @@
     - Подключение матриц зигзагом
     - Аппаратный и программный SPI
     - Невероятная оптимизация
-    
+
     AlexGyver, alex@alexgyver.ru
     https://alexgyver.ru/
     MIT License
@@ -20,14 +20,15 @@
     v1.2.2 - убран FastIO
     v1.3 - мелкие доработки и оптимизация, добавил поворот матриц
     v1.4 - добавил поддержку матричных дисплеев любой конфигурации (точка подключения, направление, чередование)
+    v1.5 - добавил раздельное управление яркостью и питанием матриц
 */
 
 #ifndef _GyverMAX7219_h
 #define _GyverMAX7219_h
 
 #include <Arduino.h>
+#include <GyverGFX.h>
 #include <SPI.h>
-#include "GyverGFX.h"
 
 #define GM_ZIGZAG 0
 #define GM_SERIES 1
@@ -48,22 +49,22 @@
 
 static SPISettings MAX_SPI_SETT(MAX_SPI_SPEED, MSBFIRST, SPI_MODE0);
 
-template < uint8_t width, uint8_t height, uint8_t CSpin, uint8_t DATpin = 0, uint8_t CLKpin = 0 >
+template <uint8_t WIDTH, uint8_t HEIGHT, uint8_t CSpin, uint8_t DATpin = 0, uint8_t CLKpin = 0>
 class MAX7219 : public GyverGFX {
-public:
-    MAX7219() : GyverGFX(width * 8, height * 8) {
+   public:
+    MAX7219() : GyverGFX(WIDTH * 8, HEIGHT * 8) {
         begin();
     }
-    
+
     // запустить
     void begin() {
         pinMode(CSpin, OUTPUT);
         if (DATpin == CLKpin) {
-            SPI.begin();			
-        } else {			
+            SPI.begin();
+        } else {
             pinMode(DATpin, OUTPUT);
             pinMode(CLKpin, OUTPUT);
-        }		
+        }
         sendCMD(0x0f, 0x00);  // отключить режим теста
         sendCMD(0x09, 0x00);  // выключить декодирование
         sendCMD(0x0a, 0x00);  // яркость
@@ -71,83 +72,89 @@ public:
         sendCMD(0x0C, 0x01);  // включить
         clearDisplay();       // очистить
     }
-    
+
     // установить яркость [0-15]
-    void setBright(uint8_t value) {	// 8x8: 0/8/15 - 30/310/540 ma
-        sendCMD(0x0a, value);		// яркость 0-15
+    void setBright(int value) {
+        sendCMD(0x0a, value);  // 8x8: 0/8/15 - 30/310/540 ma
     }
-    
+    void setBright(uint8_t* values) {
+        sendCMDs(0x0a, values);
+    }
+
     // переключить питание
     void setPower(bool value) {
         sendCMD(0x0c, value);
     }
-    
+    void setPower(bool* values) {
+        sendCMDs(0x0c, (uint8_t*)values);
+    }
+
     // очистить
     void clear() {
         fillByte(0);
     }
-    
+
     // залить
     void fill() {
         fillByte(255);
     }
-    
+
     // залить байтом
     void fillByte(uint8_t data) {
-        for (int i = 0; i < width * height * 8; i++) buffer[i] = data;      
+        for (uint16_t i = 0; i < WIDTH * HEIGHT * 8; i++) buffer[i] = data;
     }
-    
+
     // установить точку
     void dot(int x, int y, uint8_t fill = 1) {
-        int pos = getPosition(x, y);
+        int16_t pos = getPosition(x, y);
         if (pos >= 0) bitWrite(buffer[pos], _bx, fill);
     }
 
     // получить точку
-    bool get(int x, int y) {
-        int pos = getPosition(x, y);
+    bool get(int16_t x, int16_t y) {
+        int16_t pos = getPosition(x, y);
         if (pos >= 0) return bitRead(buffer[pos], _bx);
         else return 0;
     }
 
     // обновить
     void update() {
-        int count = 0;
-        for (int k = 0; k < 8; k++) {
+        uint16_t count = 0;
+        for (uint8_t k = 0; k < 8; k++) {
             beginData();
-            for (int i = 0; i < _amount; i++) sendData(8 - k, buffer[count++]);
+            for (uint16_t i = 0; i < _amount; i++) sendData(8 - k, buffer[count++]);
             endData();
         }
     }
-    
+
     // начать отправку
     void beginData() {
         if (DATpin == CLKpin) SPI.beginTransaction(MAX_SPI_SETT);
-        fastWrite(CSpin, 0);		
+        fastWrite(CSpin, 0);
     }
-    
+
     // закончить отправку
-    void endData() {		
+    void endData() {
         fastWrite(CSpin, 1);
         if (DATpin == CLKpin) SPI.endTransaction();
     }
-    
+
     // отправка данных напрямую в матрицу (строка, байт)
     void sendByte(uint8_t address, uint8_t value) {
         beginData();
         sendData(address + 1, value);
         endData();
     }
-    
+
     // очистить дисплей (не буфер)
     void clearDisplay() {
-        for (int k = 0; k < 8; k++) {
+        for (uint8_t k = 0; k < 8; k++) {
             beginData();
-            for (int i = 0; i < _amount; i++) sendData(8 - k, 0);
+            for (uint16_t i = 0; i < _amount; i++) sendData(8 - k, 0);
             endData();
         }
     }
-    
+
     // поворот матриц (8x8): 0, 1, 2, 3 на 90 град по часовой стрелке
     void setRotation(uint8_t rot) {
         _rot = rot;
@@ -157,12 +164,12 @@ public:
     void setFlip(bool x, bool y) {
         _flip = x | (y << 1);
     }
-    
+
     // тип дисплея: построчный последовательный (GM_SERIES) или зигзаг GM_ZIGZAG
     void setType(bool type) {
         _type = type;
     }
-    
+
     // ориентация (точка подключения дисплея)
     void setConnection(uint8_t conn) {
         _conn = conn;
@@ -170,68 +177,98 @@ public:
         else size(_maxY, _maxX);
     }
 
-    uint8_t buffer[width * height * 8];
+    uint8_t buffer[WIDTH * HEIGHT * 8];
 
-private:
-    int getPosition(int x, int y) {
+   private:
+    int16_t getPosition(int16_t x, int16_t y) {
         switch (_conn) {
-        //case GM_LEFT_TOP_RIGHT: break;
-        case GM_RIGHT_TOP_LEFT: flipX(x); flip(y); break;
-        case GM_RIGHT_BOTTOM_LEFT: flipY(y); flipX(x); break;
-        case GM_LEFT_BOTTOM_RIGHT: flipY(y); flip(y); break;
-        case GM_LEFT_TOP_DOWN: swap(x, y); flip(y); break;
-        case GM_RIGHT_TOP_DOWN: swap(x, y); flipY(y); break;
-        case GM_RIGHT_BOTTOM_UP: swap(x, y); flipX(x); flip(y); flipY(y); break;
-        case GM_LEFT_BOTTOM_UP: swap(x, y); flipX(x); break;
+            // case GM_LEFT_TOP_RIGHT: break;
+            case GM_RIGHT_TOP_LEFT:
+                flipX(x);
+                flip(y);
+                break;
+            case GM_RIGHT_BOTTOM_LEFT:
+                flipY(y);
+                flipX(x);
+                break;
+            case GM_LEFT_BOTTOM_RIGHT:
+                flipY(y);
+                flip(y);
+                break;
+            case GM_LEFT_TOP_DOWN:
+                swap(x, y);
+                flip(y);
+                break;
+            case GM_RIGHT_TOP_DOWN:
+                swap(x, y);
+                flipY(y);
+                break;
+            case GM_RIGHT_BOTTOM_UP:
+                swap(x, y);
+                flipX(x);
+                flip(y);
+                flipY(y);
+                break;
+            case GM_LEFT_BOTTOM_UP:
+                swap(x, y);
+                flipX(x);
+                break;
         }
         if (x < 0 || x >= _maxX || y < 0 || y >= _maxY) return -1;
 
-        int b = y;
+        int16_t b = y;
         switch (_rot) {
-        //case 0: break;
-        case 1:
-            y = (y & 0xF8) + (x & 7);
-            x = (x & 0xF8) + 7 - (b & 7);
-            break;
-        case 2:
-            flip(x);
-            flip(y);
-            break;
-        case 3:
-            y = (y & 0xF8) + 7 - (x & 7);
-            x = (x & 0xF8) + (b & 7);
-            break;
+            // case 0: break;
+            case 1:
+                y = (y & 0xF8) + (x & 7);
+                x = (x & 0xF8) + 7 - (b & 7);
+                break;
+            case 2:
+                flip(x);
+                flip(y);
+                break;
+            case 3:
+                y = (y & 0xF8) + 7 - (x & 7);
+                x = (x & 0xF8) + (b & 7);
+                break;
         }
 
         switch (_flip) {
-        //case 0: break;
-        case 1: flip(x); break;
-        case 2: flip(y); break;
-        case 3: flip(x); flip(y); break;
+            // case 0: break;
+            case 1:
+                flip(x);
+                break;
+            case 2:
+                flip(y);
+                break;
+            case 3:
+                flip(x);
+                flip(y);
+                break;
         }
-        
+
         if (_type == GM_ZIGZAG) {
-            if ((y >> 3) & 1) {                 // если это нечётная матрица: (y / 8) % 2
-                x = _maxX - 1 - x;              // отзеркалить x
-                y = (y & 0xF8) + (7 - (y & 7)); // отзеркалить y: (y / 8) * 8 + (7 - (y % 8));
+            if ((y >> 3) & 1) {                  // если это нечётная матрица: (y / 8) % 2
+                x = _maxX - 1 - x;               // отзеркалить x
+                y = (y & 0xF8) + (7 - (y & 7));  // отзеркалить y: (y / 8) * 8 + (7 - (y % 8));
             }
         }
-        
+
         _bx = x & 7;
-        return width * (height - 1 - (y >> 3)) + (width - 1 - (x >> 3)) + (y & 7) * width * height; // позиция в буфере
+        return WIDTH * (HEIGHT - 1 - (y >> 3)) + (WIDTH - 1 - (x >> 3)) + (y & 7) * WIDTH * HEIGHT;  // позиция в буфере
     }
 
-    void flip(int& v) {
-        v = (v & 0xF8) + 7 - (v & 7);   // (v / 8 + 1) * 8 - 1 - (v % 8)
+    void flip(int16_t& v) {
+        v = (v & 0xF8) + 7 - (v & 7);  // (v / 8 + 1) * 8 - 1 - (v % 8)
     }
-    void flipX(int& v) {
+    void flipX(int16_t& v) {
         v = _maxX - v - 1;
     }
-    void flipY(int& v) {
+    void flipY(int16_t& v) {
         v = _maxY - v - 1;
     }
-    void swap(int& x, int& y) {
-        int b = y;
+    void swap(int16_t& x, int16_t& y) {
+        int16_t b = y;
         y = x;
         x = b;
     }
@@ -247,14 +284,14 @@ private:
         digitalWrite(pin, val);
 #endif
     }
-    
+
     void F_fastShiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t data) {
 #if defined(AVR)
-        volatile uint8_t *_clk_port = portOutputRegister(digitalPinToPort(clockPin));
-        volatile uint8_t *_dat_port = portOutputRegister(digitalPinToPort(dataPin));
+        volatile uint8_t* _clk_port = portOutputRegister(digitalPinToPort(clockPin));
+        volatile uint8_t* _dat_port = portOutputRegister(digitalPinToPort(dataPin));
         uint8_t _clk_mask = digitalPinToBitMask(clockPin);
         uint8_t _dat_mask = digitalPinToBitMask(dataPin);
-        for (uint8_t i = 0; i < 8; i++)  {
+        for (uint8_t i = 0; i < 8; i++) {
             if (bitOrder == MSBFIRST) {
                 if (data & (1 << 7)) *_dat_port |= _dat_mask;
                 else *_dat_port &= ~_dat_mask;
@@ -270,7 +307,6 @@ private:
 #else
         shiftOut(dataPin, clockPin, bitOrder, data);
 #endif
-
     }
     void sendData(uint8_t address, uint8_t value) {
         if (DATpin == CLKpin) {
@@ -283,14 +319,18 @@ private:
     }
     void sendCMD(uint8_t address, uint8_t value) {
         beginData();
-        for (int i = 0; i < _amount; i++) sendData(address, value);
+        for (uint16_t i = 0; i < _amount; i++) sendData(address, value);
         endData();
     }
-    
-    const int _amount = width * height;
-    const int _maxX = width * 8;
-    const int _maxY = height * 8;
-    int _row = 0, _count = 0;
+    void sendCMDs(uint8_t address, uint8_t* values) {
+        beginData();
+        for (uint16_t i = 0; i < _amount; i++) sendData(address, values[_amount - i - 1]);
+        endData();
+    }
+
+    const uint16_t _amount = WIDTH * HEIGHT;
+    const int16_t _maxX = WIDTH * 8;
+    const int16_t _maxY = HEIGHT * 8;
     uint8_t _rot = 0, _bx = 0, _flip = 0, _conn = 0;
     bool _type = GM_ZIGZAG;
 };
