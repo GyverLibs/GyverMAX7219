@@ -1,4 +1,6 @@
 #include <Arduino.h>
+// полное описание библиотеки бегущей строки смотри здесь
+// https://github.com/GyverLibs/GyverGFX
 
 #include <GyverMAX7219.h>
 #include <RunningGFX.h>
