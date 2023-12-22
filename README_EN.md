@@ -1,136 +1,158 @@
 This is an automatic translation, may be incorrect in some places. See sources and examples!
 
-# GyverMAX7219
-The sharpest library for MAX7219 matrices in the wild west
-- Inherits graphics from GyverGFX
-- Connecting matrices in a zigzag pattern
-- Hardware and software SPI
+# Gyvermax7219
+A sharp library for matrices Max7219 in the Wild West
+- Inherits graphics from Gyvergfx
+- Connection of matrices zigzag
+- hardware and software SPI
 - Incredible optimization
+- works with displays of any design
 
-### Compatibility
-Compatible with all Arduino platforms (using Arduino functions)
+## compatibility
+Compatible with all arduino platforms (used arduino functions)
 
 ## Content
-- [Install](#install)
-- [Initialization](#init)
-- [Usage](#usage)
-- [Example](#example)
-- [Versions](#versions)
-- [Bugs and feedback](#feedback)
+- [installation] (# Install)
+- [initialization] (#init)
+- [use] (#usage)
+- [Example] (# Example)
+- [versions] (#varsions)
+- [bugs and feedback] (#fedback)
 
-<a id="install"></a>
+<a id="install"> </a>
 ## Installation
-- Requires [GyverGFX](https://github.com/GyverLibs/GyverGFX) to work
-- The library can be found under the name **GyverMAX7219** and installed through the library manager in:
-    - Arduino IDE
-    - Arduino IDE v2
-    - PlatformIO
-- [Download library](https://github.com/GyverLibs/GyverMAX7219/archive/refs/heads/main.zip) .zip archive for manual installation:
-    - Unzip and put in *C:\Program Files (x86)\Arduino\libraries* (Windows x64)
-    - Unzip and put in *C:\Program Files\Arduino\libraries* (Windows x32)
-    - Unpack and put in *Documents/Arduino/libraries/*
-    - (Arduino IDE) automatic installation from .zip: *Sketch/Include library/Add .ZIP library…* and specify the downloaded archive
-- Read more detailed instructions for installing libraries [here] (https://alexgyver.ru/arduino-first/#%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE% D0%B2%D0%BA%D0%B0_%D0%B1%D0%B8%D0%B1%D0%BB%D0%B8%D0%BE%D1%82%D0%B5%D0%BA)
+- For work, you need [gyvergfx] (https://github.com/gyverlibs/gyvergfx)
+- The library can be found by the name ** gyvermax7219 ** and installed through the library manager in:
+    - Arduino ide
+    - Arduino ide v2
+    - Platformio
+- [download library] (https://github.com/gyverlibs/gyvermax7219/archive/refs/heads/main.zip). Zip archive for manual installation:
+    - unpack and put in * C: \ Program Files (X86) \ Arduino \ Libraries * (Windows X64)
+    - unpack and put in * C: \ Program Files \ Arduino \ Libraries * (Windows X32)
+    - unpack and put in *documents/arduino/libraries/ *
+    - (Arduino id) Automatic installation from. Zip: * sketch/connect the library/add .Zip library ... * and specify downloaded archive
+- Read more detailed instructions for installing libraries [here] (https://alexgyver.ru/arduino-first/#%D0%A3%D1%81%D1%82%D0%B0%BD%D0%BE%BE%BE%BED0%B2%D0%BA%D0%B0_%D0%B1%D0%B8%D0%B1%D0%BB%D0%B8%D0%BE%D1%82%D0%B5%D0%BA)
+### Update
+- I recommend always updating the library: errors and bugs are corrected in the new versions, as well as optimization and new features are added
+- through the IDE library manager: find the library how to install and click "update"
+- Manually: ** remove the folder with the old version **, and then put a new one in its place.“Replacement” cannot be done: sometimes in new versions, files that remain when replacing are deleted and can lead to errors!
 
-<a id="init"></a>
-## Initialization
-```cpp
-MAX7219 < W, H, CS > mtrx; // connect to hardware SPI
-// example: UNO / Nano (CLK - D13, DI - D11, CS - any pin)
+<a id="init"> </a>
+## initialization
 
-MAX7219 < W, H, CS, DATA, CLK > mtrx; // connect to any pins
-// W and H - the number of MATRIXes horizontally and vertically
-// CS, DATA, CLK - pin numbers
-```
+`` `CPP
+Max7219 <w, h, cs> mtrx;// Connection to the hardware SPI
+// Example: uno / nano (clk - d13, di - d11, cs - any pin)
 
-<a id="usage"></a>
+Max7219 <w, h, CS, Data, Clk> Mtrx;// Connecting to any pins (SOFT SPI)
+// w and h - the number of matrices horizontally and vertical
+// CS, Data, Clk - Pino numbers
+`` `
+
+## display
+! [settype] (/doc/settype.png)
+! [setconnection] (/doc/setConnel)
+
+<a id="usage"> </a>
+
 ## Usage
-```cpp
-voidbegin(); // run
-void setRotation(uint8_t rotation); // rotate matrices (0, 1, 2, 3 by 90 degrees clockwise)
-void setBright(byte value); // set brightness [0-15]
-void setPower(bool value); // switch power
-void clear(); // clear
-voidfill(); // fill
-void fillByte(byte data); // fill with byte
-void dot(int x, int y, byte fill = 1); // set point
-bool get(int x, int y); // get point
-void update(); // update
+`` `CPP
+// Setting
+VOID Begin ();// Launch
+VOID Setbright (Byte Value);// Set brightness [0-15]
+VOID Setbright (Uint8_t* Values);// Install different brightness
+VOID SetPower (Bool Value);// Switch power
+VOID setpower (Bool* Values);// Switch power in the selected
+VOID Cleardisplay ();// Clean the display (not a buffer)
 
-// and also inherits everything from GyverGFX:
-void dot(int x, int y, uint8_t fill = 1); // point, fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void fastLineH(int y, int x0, int x1, uint8_t fill = 1); // vertical line, fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void fastLineV(int x, int y0, int y1, uint8_t fill = 1); // horizontal line, fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void line(int x0, int y0, int x1, int y1, uint8_t fill = 1); // line, fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1); // rectangle, fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1); // rounded rectangle, fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void circle(int x, int y, int radius, uint8_t fill = 1); // circle, fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1); // bezier curve
-void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);// Bezier curve 16 bit. fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0); // bitmap
-void setCursor(int x, int y); // set cursor
-void setScale(uint8_tscale); // text scale
-void invertText(bool inv); // invert text
-void autoPrintln(bool mode); // automatic line break
-void textDisplayMode(bool mode); // text output mode GFX_ADD/GFX_REPLACE
+// Orientation
+VOID setrotation (Uint8_T ROT);// Turn of matrices (8x8): 0, 1, 2, 3 to 90 degrees clockwise
+VOID setflip (Bool X, Bool Y);// Mirror reflection of matrices (8x8) by x and y
+VOID Settype (Bool Type);// Display design (type of lowercy)
+VOID setconnection (Uint8_T Conn);// Display connection point
 
-// and from Print.h
-// print/println any data type
-```
+// graphic arts
+Void Fillbyte (Uint8_t Data);// Pour a byte
+VOID Fill ();// Pour the buffer (turn on everything)
+Void Clear ();// Clean the buffer
+VOID update ();// update the display
 
-<a id="example"></a>
+VOID DOT (Int X, Int Y, UINT8_T FILL = 1);// set the point
+Bool get (int16_t x, int16_t y);// Get a point from the buffer
+
+// + inherits the capabilities of gyvergfx https://github.com/gyverlibs/gyvergfx
+
+// Custom
+VOID BeginData ();// Start sending
+VOID Enddata ();// finish the sending
+// Sending data directly to the matrix (line, byte)
+VOID SENDBYTE (Uint8_T Address, Uint8_t Value);
+`` `
+
+<a id="EXAMPLE"> </a>
 ## Example
-See **examples** for other examples!
-```cpp
-#include <GyverMAX7219.h>
-MAX7219 < 1, 1, 5 > mtrx; // one matrix (1x1), pin CS on D5
+The rest of the examples look at ** Examples **!
+`` `CPP
+#include <gyvermax7219.h>
+Max7219 <1, 1, 5> MTRX;// one matrix (1x1), pin cs on d5
 
-void setup() {
-  mtrx.begin(); // run
-  mtrx.setBright(5); // brightness 0..15
-  //mtrx.rotate(1); // you can rotate 0..3, 90 degrees clockwise
+VOID setup () {
+  mtrx.begin ();// Launch
+  mtrx.setbright (5);// brightness 0..15
+  //mtrx.rotate(1);// you can turn 0..3, 90 degrees clockwise
 
-  mtrx.dot(0, 0); // pixel at coordinates 0,0
-  mtrx update(); // show
-  delay(1000);
-  mtrx.clear();
+  mtrx.dot (0, 0);// Pixel on coordinates 0.0
+  mtrx.update ();// show
+  DELAY (1000);
+  mtrx.clear ();
 
-  // criss-cross lines
-  mtrx.line(0, 0, 7, 7); // (x0, y0, x1, y1)
-  mtrx.line(7, 0, 0, 7);
-  mtrx update();
-  delay(1000);
-  mtrx.clear();
-
-  // a circle
-  mtrx.circle(3, 3, 3, GFX_FILL); // x, y, radius, fill
-  mtrx update();
-  delay(1000);
-  mtrx.clear();
+  // Line Cross Cross
+  mtrx.line (0, 0, 7, 7);// (x0, y0, x1, y1)
+  mtrx.line (7, 0, 0, 7);
+  mtrx.update ();
+  DELAY (1000);
+  mtrx.clear ();
 
   // circle
-  mtrx.circle(3, 3, 3, GFX_STROKE);
-  mtrx update();
-  delay(1000);
-  mtrx.clear();
+  mtrx.circle (3, 3, 3, gfx_fill);// x, y, radius, filling
+  mtrx.update ();
+  DELAY (1000);
+  mtrx.clear ();
 
-  // see the documentation for the rest of the geometry
+  // circle
+  mtrx.circle (3, 3, 3, gfx_stroke);
+  mtrx.update ();
+  DELAY (1000);
+  mtrx.clear ();
+
+  // See the rest of the geometry in the documentation
 }
 
-void loop() {
+VOID loop () {
 }
-```
+`` `
 
-<a id="versions"></a>
-## Versions
+<a id="versions"> </a>
+## versions
 - v1.0 - release
-- v1.1 - SPI optimized
-- v1.2 - redesigned FastIO
-- v1.2.1 - fixed bug in SPI (since 1.2)
-- v1.2.2 - removed FastIO
-- v1.3 - minor improvements and optimization, added matrix rotation
+- V1.1 - optimized SPI
+- V1.2 - Redeled Fastio
+- v1.2.1 - fixed bug in SPI (with 1.2)
+- v1.2.2 - removed Fastio
+- V1.3 - minor improvements and optimization, added a turn of matrices
+- V1.4 - added support for matrix displays of any configuration (connection point, direction, alternation)
+- v1.5 - added separate control of the brightness and nutrition of matrices
 
-<a id="feedback"></a>
-## Bugs and feedback
-When you find bugs, create an **Issue**, or better, immediately write to the mail [alex@alexgyver.ru](mailto:alex@alexgyver.ru)
-The library is open for revision and your **Pull Request**'s!
+<a id="feedback"> </a>
+## bugs and feedback
+Create ** Issue ** when you find the bugs, and better immediately write to the mail [alex@alexgyver.ru] (mailto: alex@alexgyver.ru)
+The library is open for refinement and your ** pull Request ** 'ow!
+
+When reporting about bugs or incorrect work of the library, it is necessary to indicate:
+- The version of the library
+- What is MK used
+- SDK version (for ESP)
+- version of Arduino ide
+- whether the built -in examples work correctly, in which the functions and designs are used, leading to a bug in your code
+- what code has been loaded, what work was expected from it and how it works in reality
+- Ideally, attach the minimum code in which the bug is observed.Not a canvas of a thousand lines, but a minimum code
