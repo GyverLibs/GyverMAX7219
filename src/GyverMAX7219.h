@@ -23,25 +23,28 @@
     v1.5 - добавил раздельное управление яркостью и питанием матриц
 */
 
-#ifndef _GyverMAX7219_h
-#define _GyverMAX7219_h
+#pragma once
 
 #include <Arduino.h>
 #include <GyverGFX.h>
 #include <SPI.h>
 
-#define GM_ZIGZAG 0
-#define GM_SERIES 1
+enum GM_order : uint8_t {
+    GM_ZIGZAG,
+    GM_SERIES,
+};
 
-#define GM_LEFT_TOP_RIGHT 0
-#define GM_RIGHT_TOP_LEFT 1
-#define GM_RIGHT_BOTTOM_LEFT 2
-#define GM_LEFT_BOTTOM_RIGHT 3
+enum GM_conn : uint8_t {
+    GM_LEFT_TOP_RIGHT,
+    GM_RIGHT_TOP_LEFT,
+    GM_RIGHT_BOTTOM_LEFT,
+    GM_LEFT_BOTTOM_RIGHT,
 
-#define GM_LEFT_TOP_DOWN 4
-#define GM_RIGHT_TOP_DOWN 5
-#define GM_RIGHT_BOTTOM_UP 6
-#define GM_LEFT_BOTTOM_UP 7
+    GM_LEFT_TOP_DOWN,
+    GM_RIGHT_TOP_DOWN,
+    GM_RIGHT_BOTTOM_UP,
+    GM_LEFT_BOTTOM_UP,
+};
 
 #ifndef MAX_SPI_SPEED
 #define MAX_SPI_SPEED 1000000
@@ -75,7 +78,7 @@ class MAX7219 : public GyverGFX {
 
     // установить яркость [0-15]
     void setBright(int value) {
-        sendCMD(0x0a, value);  // 8x8: 0/8/15 - 30/310/540 ma
+        sendCMD(0x0a, value & 0xF);  // 8x8: 0/8/15 - 30/310/540 ma
     }
     void setBright(uint8_t* values) {
         sendCMDs(0x0a, values);
@@ -165,19 +168,19 @@ class MAX7219 : public GyverGFX {
         _flip = x | (y << 1);
     }
 
-    // тип дисплея: построчный последовательный (GM_SERIES) или зигзаг GM_ZIGZAG
-    void setType(bool type) {
+    // тип дисплея: построчный последовательный GM_SERIES или зигзаг GM_ZIGZAG
+    void setType(GM_order type) {
         _type = type;
     }
 
     // ориентация (точка подключения дисплея)
-    void setConnection(uint8_t conn) {
+    void setConnection(GM_conn conn) {
         _conn = conn;
-        if (_conn <= 3) size(_maxX, _maxY);
+        if (_conn <= GM_LEFT_BOTTOM_RIGHT) size(_maxX, _maxY);
         else size(_maxY, _maxX);
     }
 
-    uint8_t buffer[WIDTH * HEIGHT * 8];
+    uint8_t buffer[WIDTH * HEIGHT * 8] = {};
 
    private:
     int16_t getPosition(int16_t x, int16_t y) {
@@ -212,6 +215,8 @@ class MAX7219 : public GyverGFX {
             case GM_LEFT_BOTTOM_UP:
                 swap(x, y);
                 flipX(x);
+                break;
+            default:
                 break;
         }
         if (x < 0 || x >= _maxX || y < 0 || y >= _maxY) return -1;
@@ -331,7 +336,7 @@ class MAX7219 : public GyverGFX {
     const uint16_t _amount = WIDTH * HEIGHT;
     const int16_t _maxX = WIDTH * 8;
     const int16_t _maxY = HEIGHT * 8;
-    uint8_t _rot = 0, _bx = 0, _flip = 0, _conn = 0;
-    bool _type = GM_ZIGZAG;
+    uint8_t _rot = 0, _bx = 0, _flip = 0;
+    GM_conn _conn = GM_conn::GM_LEFT_TOP_RIGHT;
+    GM_order _type = GM_order::GM_ZIGZAG;
 };
-#endif
