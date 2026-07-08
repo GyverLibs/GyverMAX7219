@@ -12,6 +12,7 @@
 MAX7219 < 1, 1, 5 > mtrx;   // одна матрица (1х1), пин CS на D5
 
 void setup() {
+  SPI.begin();
   mtrx.begin();       // запускаем
   mtrx.setBright(5);  // яркость 0..15
   //mtrx.setRotation(1);   // можно повернуть 0..3, по 90 град по часовой стрелке

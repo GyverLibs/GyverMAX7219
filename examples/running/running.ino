@@ -10,6 +10,7 @@ RunningGFX run(&mtrx);
 const char pstr_g[] PROGMEM = "Global pgm string";
 
 void setup() {
+    SPI.begin();
     mtrx.begin();       // запускаем
     mtrx.setBright(5);  // яркость 0..15
 

@@ -2,6 +2,7 @@
 MAX7219<2, 1, 5> mtrx;  // матрица (2х1), пин CS на D5
 
 void setup() {
+    SPI.begin();
     mtrx.begin();       // запускаем
     mtrx.setBright(5);  // яркость 0..15
 

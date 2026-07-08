@@ -65,7 +65,7 @@ MAX7219 < W, H, CS, DATA, CLK > mtrx; // подключение к любым п
 ```cpp
 // настройка
 void begin();                       // запустить
-void setBright(byte value);         // установить яркость [0-15]
+void setBright(uint8_t value);      // установить яркость [0-15]
 void setBright(uint8_t* values);    // установить разную яркость
 void setPower(bool value);          // переключить питание
 void setPower(bool* values);        // переключить питание у выбранных
@@ -103,6 +103,7 @@ void sendByte(uint8_t address, uint8_t value);
 MAX7219 < 1, 1, 5 > mtrx;   // одна матрица (1х1), пин CS на D5
 
 void setup() {
+  SPI.begin();
   mtrx.begin();       // запускаем
   mtrx.setBright(5);  // яркость 0..15
   //mtrx.rotate(1);   // можно повернуть 0..3, по 90 град по часовой стрелке

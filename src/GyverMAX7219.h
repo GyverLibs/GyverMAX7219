@@ -55,15 +55,13 @@ static SPISettings MAX_SPI_SETT(MAX_SPI_SPEED, MSBFIRST, SPI_MODE0);
 template <uint8_t WIDTH, uint8_t HEIGHT, uint8_t CSpin, uint8_t DATpin = 0, uint8_t CLKpin = 0>
 class MAX7219 : public GyverGFX {
    public:
-    MAX7219() : GyverGFX(WIDTH * 8, HEIGHT * 8) {
-        begin();
-    }
+    MAX7219() : GyverGFX(WIDTH * 8, HEIGHT * 8) {}
 
     // запустить
     void begin() {
         pinMode(CSpin, OUTPUT);
         if (DATpin == CLKpin) {
-            SPI.begin();
+            // SPI.begin();
         } else {
             pinMode(DATpin, OUTPUT);
             pinMode(CLKpin, OUTPUT);
@@ -71,7 +69,7 @@ class MAX7219 : public GyverGFX {
         sendCMD(0x0f, 0x00);  // отключить режим теста
         sendCMD(0x09, 0x00);  // выключить декодирование
         sendCMD(0x0a, 0x00);  // яркость
-        sendCMD(0x0b, 0x0f);  // отображаем всё
+        sendCMD(0x0b, 0x07);  // отображаем всё
         sendCMD(0x0C, 0x01);  // включить
         clearDisplay();       // очистить
     }
@@ -80,7 +78,7 @@ class MAX7219 : public GyverGFX {
     void setBright(int value) {
         sendCMD(0x0a, value & 0xF);  // 8x8: 0/8/15 - 30/310/540 ma
     }
-    void setBright(uint8_t* values) {
+    void setBright(const uint8_t* values) {
         sendCMDs(0x0a, values);
     }
 
@@ -88,8 +86,8 @@ class MAX7219 : public GyverGFX {
     void setPower(bool value) {
         sendCMD(0x0c, value);
     }
-    void setPower(bool* values) {
-        sendCMDs(0x0c, (uint8_t*)values);
+    void setPower(const bool* values) {
+        sendCMDs(0x0c, (const uint8_t*)values);
     }
 
     // очистить
@@ -145,7 +143,7 @@ class MAX7219 : public GyverGFX {
     // отправка данных напрямую в матрицу (строка, байт)
     void sendByte(uint8_t address, uint8_t value) {
         beginData();
-        sendData(address + 1, value);
+        for (uint16_t i = 0; i < _amount; i++) sendData((address & 0x07) + 1, value);
         endData();
     }
 
@@ -160,7 +158,7 @@ class MAX7219 : public GyverGFX {
 
     // поворот матриц (8x8): 0, 1, 2, 3 на 90 град по часовой стрелке
     void setRotation(uint8_t rot) {
-        _rot = rot;
+        _rot = rot & 0x03;
     }
 
     // зеркальное отражение матриц (8x8) по x и y
@@ -327,7 +325,7 @@ class MAX7219 : public GyverGFX {
         for (uint16_t i = 0; i < _amount; i++) sendData(address, value);
         endData();
     }
-    void sendCMDs(uint8_t address, uint8_t* values) {
+    void sendCMDs(uint8_t address, const uint8_t* values) {
         beginData();
         for (uint16_t i = 0; i < _amount; i++) sendData(address, values[_amount - i - 1]);
         endData();
